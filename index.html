@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Modern Portfolio</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:Segoe UI, Arial,sans-serif;background:#121212;color:white;overflow-y:scroll;scroll-behavior:smooth;}
+
+/* Header */
+header{position:fixed;top:0;left:0;width:100%;background:#1e1e1e;z-index:1000;padding:15px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 10px rgba(0,0,0,0.5);transition:all 0.3s;}
+header.shrink{padding:5px 20px;}
+.header-left{display:flex;align-items:center;gap:10px;transition:all 0.3s;}
+header img#logo{cursor:pointer;border-radius:8px;transition:all 0.3s;}
+header.shrink img#logo{height:30px !important;}
+header h1, header p{cursor:text;transition:all 0.3s;}
+header.shrink h1{font-size:16px;}
+header.shrink p{font-size:10px;}
+header h1{font-size:22px;}
+header p{font-size:12px;opacity:0.7;}
+.nav-buttons{display:flex;gap:10px;transition:all 0.3s;}
+header.shrink .nav-buttons button{padding:4px 10px;font-size:12px;}
+.nav-buttons button{padding:6px 12px;border:none;border-radius:20px;background:linear-gradient(135deg,#007bff,#00d4ff);color:white;cursor:pointer;transition:.3s;}
+.nav-buttons button:hover{opacity:.8;}
+
+/* Hamburger menu */
+.hamburger{display:none;flex-direction:column;cursor:pointer;}
+.hamburger div{width:25px;height:3px;background:white;margin:4px 0;transition:.3s;}
+.nav-mobile{display:none;flex-direction:column;background:#1e1e1e;position:absolute;top:60px;right:20px;border-radius:10px;padding:10px;gap:10px;}
+.nav-mobile button{width:100%;background:linear-gradient(135deg,#007bff,#00d4ff);color:white;border:none;border-radius:10px;padding:6px 0;cursor:pointer;transition:.3s;text-align:center;}
+.nav-mobile button:hover{opacity:.8;}
+
+/* Controls */
+main{padding-top:120px;max-width:1400px;margin:auto;}
+.controls{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding:10px;}
+.controls input, .controls select, .controls button{padding:8px;border-radius:6px;border:none;min-width:120px;}
+#dropArea{flex:1;min-width:200px;padding:10px;border:2px dashed #555;border-radius:10px;text-align:center;transition:.25s;opacity:.8;}
+#dropArea.hover{border-color:#fff;opacity:1;}
+button.upload-btn{background:linear-gradient(135deg,#00ffae,#00d4ff);color:black;} button.upload-btn:hover{opacity:.8;}
+
+/* Gallery */
+.gallery{column-count:4;column-gap:16px;padding:20px;margin:auto;margin-top:20px;}
+@media(max-width:1100px){.gallery{column-count:3;}}
+@media(max-width:800px){.gallery{column-count:2;}}
+@media(max-width:500px){.gallery{column-count:1;}}
+.card{position:relative;margin-bottom:16px;border-radius:12px;overflow:hidden;background:#1e1e1e;break-inside:avoid;box-shadow:0 2px 12px rgba(0,0,0,.6);cursor:grab;transition:transform .3s,box-shadow .3s;}
+.card.dragging{opacity:0.5;}
+.card img{width:100%;display:block;cursor:pointer;transition:transform .3s;}
+.card:hover img{transform:scale(1.05);}
+.info{padding:10px;transition:opacity .3s;}
+.title{font-size:14px;margin-bottom:5px;}
+.category{font-size:12px;opacity:.7;}
+.delete-btn{position:absolute;top:5px;right:5px;background:rgba(255,0,0,0.8);border:none;color:white;font-size:14px;padding:4px 8px;border-radius:6px;cursor:pointer;z-index:10;display:none;}
+.card:hover .delete-btn{display:block;}
+.card:hover .info{opacity:1;}
+
+/* Viewer */
+.viewer{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.95);display:none;align-items:center;justify-content:center;z-index:999;transition:opacity .3s;}
+.viewer img{max-width:90%;max-height:90%;border-radius:10px;animation:fadeIn 0.3s;}
+@keyframes fadeIn{from{opacity:0} to{opacity:1}}
+.close{position:absolute;top:25px;right:40px;font-size:40px;cursor:pointer;color:white;transition:opacity .25s;}
+.close:hover{opacity:.7;}
+
+/* Category editor */
+.category-editor{justify-content:center;display:flex;gap:10px;padding:10px;flex-wrap:wrap;}
+.category-editor input{min-width:100px;}
+
+/* Hamburger responsive */
+@media(max-width:700px){.nav-buttons{display:none;} .hamburger{display:flex;}}
+</style>
+</head>
+<body>
+
+<header id="header">
+<div class="header-left">
+<img id="logo" src="" alt="Logo" style="height:50px;">
+<input type="file" id="logoUpload" accept="image/*">
+<label style="color:white;font-size:12px;">Logo Size
+<input type="range" id="logoSize" min="30" max="150" value="50">
+</label>
+<h1 contenteditable="true" id="siteTitle">My Portfolio</h1>
+<p contenteditable="true" id="siteDesc">Creative Works</p>
+</div>
+
+<div class="nav-buttons" id="navButtons">
+<button onclick="filterCategory('all')">All</button>
+<button id="btn1" onclick="filterCategory('cat1')">My Work</button>
+<button id="btn2" onclick="filterCategory('cat2')">Photography</button>
+<button id="btn3" onclick="filterCategory('cat3')">Random</button>
+</div>
+
+<div class="hamburger" id="hamburger"><div></div><div></div><div></div></div>
+<div class="nav-mobile" id="navMobile">
+<button onclick="filterCategory('all')">All</button>
+<button id="mbtn1" onclick="filterCategory('cat1')">My Work</button>
+<button id="mbtn2" onclick="filterCategory('cat2')">Photography</button>
+<button id="mbtn3" onclick="filterCategory('cat3')">Random</button>
+</div>
+</header>
+
+<main>
+<div class="controls">
+<div id="dropArea">Drag & Drop Images Here</div>
+<input type="file" id="upload" accept="image/*" multiple>
+<input type="text" id="titleInput" placeholder="Image title (optional)">
+<select id="categorySelect">
+<option value="cat1">My Work</option>
+<option value="cat2">Photography</option>
+<option value="cat3">Random</option>
+</select>
+</div>
+
+<div class="category-editor">
+<input id="cat1" value="My Work">
+<input id="cat2" value="Photography">
+<input id="cat3" value="Random">
+<button onclick="updateCategories()">Update Categories</button>
+</div>
+
+<div class="gallery" id="gallery"></div>
+</main>
+
+<div class="viewer" id="viewer">
+<span class="close" id="close">&times;</span>
+<img id="viewerImg">
+</div>
+
+<script>
+const header=document.getElementById("header");
+const gallery=document.getElementById("gallery");
+const upload=document.getElementById("upload");
+const titleInput=document.getElementById("titleInput");
+const categorySelect=document.getElementById("categorySelect");
+const viewer=document.getElementById("viewer");
+const viewerImg=document.getElementById("viewerImg");
+const close=document.getElementById("close");
+const cat1=document.getElementById("cat1");
+const cat2=document.getElementById("cat2");
+const cat3=document.getElementById("cat3");
+const btn1=document.getElementById("btn1");
+const btn2=document.getElementById("btn2");
+const btn3=document.getElementById("btn3");
+const mbtn1=document.getElementById("mbtn1");
+const mbtn2=document.getElementById("mbtn2");
+const mbtn3=document.getElementById("mbtn3");
+const logo=document.getElementById("logo");
+const logoUpload=document.getElementById("logoUpload");
+const logoSize=document.getElementById("logoSize");
+const siteTitle=document.getElementById("siteTitle");
+const siteDesc=document.getElementById("siteDesc");
+const dropArea=document.getElementById("dropArea");
+const hamburger=document.getElementById("hamburger");
+const navMobile=document.getElementById("navMobile");
+
+// Hamburger toggle
+hamburger.addEventListener("click",()=>{navMobile.style.display=navMobile.style.display==="flex"?"none":"flex";});
+
+// Logo upload & size
+logoUpload.addEventListener("change",function(){const file=this.files[0];if(!file)return;const reader=new FileReader();reader.onload=function(e){logo.src=e.target.result;savePortfolio();};reader.readAsDataURL(file);});
+logoSize.addEventListener("input",()=>{logo.style.height=logoSize.value+"px";savePortfolio();});
+
+// Shrink header on scroll
+window.addEventListener("scroll",()=>{if(window.scrollY>50){header.classList.add("shrink");}else{header.classList.remove("shrink");}});
+
+// Load & save portfolio
+function loadPortfolio(){const data=JSON.parse(localStorage.getItem("portfolioData")||"{}");if(data.logo) logo.src=data.logo;if(data.logoSize) logo.style.height=data.logoSize+"px";if(data.siteTitle) siteTitle.textContent=data.siteTitle;if(data.siteDesc) siteDesc.textContent=data.siteDesc;if(data.categories){cat1.value=data.categories.cat1||"My Work";cat2.value=data.categories.cat2||"Photography";cat3.value=data.categories.cat3||"Random";updateCategories();}if(data.images){data.images.forEach(imgData=>addCard(imgData,false));}}
+function savePortfolio(){const cards=Array.from(document.querySelectorAll(".card")).map(card=>{const img=card.querySelector("img").src;const titleEl=card.querySelector(".title");return{src:img,title:titleEl?titleEl.textContent:"",category:card.dataset.category};});const data={logo:logo.src||"",logoSize:logo.style.height.replace("px","")||50,siteTitle:siteTitle.textContent,siteDesc:siteDesc.textContent,categories:{cat1:cat1.value,cat2:cat2.value,cat3:cat3.value},images:cards};localStorage.setItem("portfolioData",JSON.stringify(data));}
+
+// Add card
+function addCard(data,save=true){const card=document.createElement("div");card.className="card";card.dataset.category=data.category;card.draggable=true;const img=document.createElement("img");img.src=data.src;img.onclick=()=>{viewer.style.display="flex";viewerImg.src=data.src;};const info=document.createElement("div");info.className="info";if(data.title&&data.title.trim()!==""){const titleText=document.createElement("div");titleText.className="title";titleText.textContent=data.title;info.appendChild(titleText);}const categoryText=document.createElement("div");categoryText.className="category";categoryText.textContent=document.querySelector(`#${data.category}`).value;info.appendChild(categoryText);const deleteBtn=document.createElement("button");deleteBtn.className="delete-btn";deleteBtn.textContent="Delete";deleteBtn.onclick=function(){gallery.removeChild(card);savePortfolio();};card.appendChild(deleteBtn);card.appendChild(img);card.appendChild(info);gallery.appendChild(card);
+card.addEventListener("dragstart",e=>{card.classList.add("dragging");});
+card.addEventListener("dragend",e=>{card.classList.remove("dragging");savePortfolio();});
+if(save) savePortfolio();}
+
+// Upload images
+upload.addEventListener("change",function(){Array.from(this.files).forEach(file=>{const reader=new FileReader();reader.onload=function(e){addCard({src:e.target.result,title:titleInput.value.trim(),category:categorySelect.value});};reader.readAsDataURL(file);});titleInput.value="";});
+
+// Drop Area
+dropArea.addEventListener("dragover",e=>{e.preventDefault();dropArea.classList.add("hover");});
+dropArea.addEventListener("dragleave",e=>{dropArea.classList.remove("hover");});
+dropArea.addEventListener("drop",e=>{e.preventDefault();dropArea.classList.remove("hover");Array.from(e.dataTransfer.files).forEach(file=>{const reader=new FileReader();reader.onload=function(ev){addCard({src:ev.target.result,title:"",category:categorySelect.value});};reader.readAsDataURL(file);});});
+
+// Rearrange
+gallery.addEventListener("dragover",e=>{e.preventDefault();const dragging=document.querySelector(".dragging");const afterElement=getDragAfterElement(gallery,e.clientY);if(afterElement==null) gallery.appendChild(dragging);else gallery.insertBefore(dragging,afterElement);});
+function getDragAfterElement(container,y){const draggableElements=[...container.querySelectorAll(".card:not(.dragging)")];return draggableElements.reduce((closest,child)=>{const box=child.getBoundingClientRect();const offset=y-box.top-box.height/2;return (offset<0 && offset>closest.offset)?{offset:offset,element:child}:closest;},{offset:Number.NEGATIVE_INFINITY}).element;}
+
+// Filter category
+function filterCategory(category){document.querySelectorAll(".card").forEach(card=>{card.style.display=(category==="all"||card.dataset.category===category)?"block":"none";});}
+
+// Update categories
+function updateCategories(){btn1.textContent=cat1.value;btn2.textContent=cat2.value;btn3.textContent=cat3.value;mbtn1.textContent=cat1.value;mbtn2.textContent=cat2.value;mbtn3.textContent=cat3.value;const options=categorySelect.options;options[0].text=cat1.value;options[1].text=cat2.value;options[2].text=cat3.value;document.querySelectorAll(".card").forEach(card=>{card.querySelector(".category").textContent=document.querySelector(`#${card.dataset.category}`).value;});savePortfolio();}
+
+// Editable title & desc
+siteTitle.addEventListener("input",savePortfolio);
+siteDesc.addEventListener("input",savePortfolio);
+
+// Viewer
+close.onclick=function(){viewer.style.display="none";}
+viewer.onclick=function(e){if(e.target!==viewerImg){viewer.style.display="none";}}
+
+// Init
+loadPortfolio();
+</script>
+</body>
+</html>
